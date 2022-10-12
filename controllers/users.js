@@ -34,17 +34,17 @@ const getUserById = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
       }
-      res.send(user);
+      return res.send(user);
     })
     .catch((err) => {
-      if () {
+      if (err instanceof mongoose.Error.CastError) {
         return res.status(400).send({ message: 'Не корректный _id', err });
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию', err });
     });
 };
 
-const updateUser = (req, res) => err instanceof mongoose.Error.CastError{
+const updateUser = (req, res) => {
   User.findByIdAndUpdate(
     req.user._id,
     {

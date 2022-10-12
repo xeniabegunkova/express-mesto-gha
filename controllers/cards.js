@@ -47,14 +47,14 @@ const likeCard = (req, res) => Card.findByIdAndUpdate(
   req.params.cardId,
   { $addToSet: { likes: req.user._id } },
   { new: true },
-).orFail(new Error('NotFounded'))
+)
   .then((card) => {
-    res.send({ data: card });
+    if (!card) {
+      return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+    }
+    return res.send({ data: card });
   })
   .catch((err) => {
-    if (err.massage === 'NotFounded') {
-      return res.status(404).send({ message: 'Пользователя с указанным _id не найден', err });
-    }
     if (err instanceof mongoose.Error.CastError) {
       return res.status(400).send({ message: 'Не корректный _id', err });
     }
@@ -65,14 +65,14 @@ const dislikeCard = (req, res) => Card.findByIdAndUpdate(
   req.params.cardId,
   { $pull: { likes: req.user._id } },
   { new: true },
-).orFail(new Error('NotFounded'))
+)
   .then((card) => {
-    res.send({ data: card });
+    if (!card) {
+      return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+    }
+    return res.send({ data: card });
   })
   .catch((err) => {
-    if (err.massage === 'NotFounded') {
-      return res.status(404).send({ message: 'Пользователя с указанным _id не найден', err });
-    }
     if (err instanceof mongoose.Error.CastError) {
       return res.status(400).send({ message: 'Не корректный _id', err });
     }

@@ -37,14 +37,14 @@ const getUserById = (req, res) => {
       res.send(user);
     })
     .catch((err) => {
-      if (err instanceof mongoose.Error.CastError) {
+      if () {
         return res.status(400).send({ message: 'Не корректный _id', err });
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию', err });
     });
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res) => err instanceof mongoose.Error.CastError{
   User.findByIdAndUpdate(
     req.user._id,
     {
@@ -55,10 +55,10 @@ const updateUser = (req, res) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new Error('NotFounded'))
+  )
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.massage === 'NotFounded') {
+      if (err instanceof mongoose.Error.ValidationError) {
         return res.status(404).send({ message: 'Пользователь с указанным _id не найден', err });
       }
       if (err instanceof mongoose.Error.CastError) {
@@ -78,14 +78,14 @@ const updateAvatar = (req, res) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new Error('NotFounded'))
+  )
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.massage === 'NotFounded') {
+      if (err instanceof mongoose.Error.ValidationError) {
         return res.status(404).send({ message: 'Пользователя с указанным _id не найден', err });
       }
       if (err instanceof mongoose.Error.CastError) {
-        return res.status(400).send({ message: 'Не корректный _id', err });
+        return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля', err });
       }
       return res.status(500).send({ message: 'На сервере произошла ошибка', err });
     });

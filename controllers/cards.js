@@ -28,14 +28,14 @@ const getCards = (req, res) => {
 };
 
 const deleteCardById = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId).orFail(new Error('NotFound'))
+  Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
-      res.status(201).send({ data: card });
+      if (!card) {
+        return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+      }
+      return res.send({ data: card });
     })
     .catch((err) => {
-      if (err.massage === 'NotFound') {
-        return res.status(404).send({ message: 'Карточка с указанным _id не найдена', err });
-      }
       if (err instanceof mongoose.Error.CastError) {
         return res.status(400).send({ message: 'Не корректный _id', err });
       }
@@ -50,7 +50,7 @@ const likeCard = (req, res) => Card.findByIdAndUpdate(
 )
   .then((card) => {
     if (!card) {
-      return res.status(404).send({ message: 'Передан несуществующий _id карточки' });
+      return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
     }
     return res.send({ data: card });
   })

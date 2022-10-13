@@ -28,18 +28,18 @@ const getCards = (req, res) => {
 };
 
 const deleteCardById = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId).orFail(new Error('NotFounded'))
+  Card.findByIdAndRemove(req.params.cardId).orFail(new Error('NotFound'))
     .then((card) => {
-      res.send({ data: card });
+      res.status(201).send({ data: card });
     })
     .catch((err) => {
-      if (err.massage === 'NotFounded') {
-        return res.status(404).send({ message: 'Пользователя с указанным _id не найден', err });
+      if (err.massage === 'NotFound') {
+        return res.status(404).send({ message: 'Карточка с указанным _id не найдена', err });
       }
       if (err instanceof mongoose.Error.CastError) {
         return res.status(400).send({ message: 'Не корректный _id', err });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка', err });
+      return res.status(500).send({ message: 'Ошибка по умолчанию.', err });
     });
 };
 

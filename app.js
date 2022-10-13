@@ -24,6 +24,10 @@ app.get('/', (req, res) => {
   res.send(req.body);
 });
 
+app.patch('*', (_req, res) => {
+  res.status(404).send({ message: 'Не найдено' });
+});
+
 app.listen(PORT, () => {
   console.log(`Listening on ${PORT}`);
 });

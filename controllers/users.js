@@ -22,23 +22,23 @@ const getUser = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(400).send({ message: 'Ошибка валидации', err });
+        return res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя.', err });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка', err });
+      return res.status(500).send({ message: 'Ошибка по умолчанию', err });
     });
 };
 
 const getUserById = (req, res) => {
-  User.findById(req.params.userId)
+  User.findById(req.params.userId).orFail(new Error('NotFound'))
     .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
-      }
-      return res.send(user);
+      res.status(201).send(user);
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
         return res.status(400).send({ message: 'Не корректный _id', err });
+      }
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию', err });
     });
@@ -55,14 +55,14 @@ const updateUser = (req, res) => {
       new: true,
       runValidators: true,
     },
-  )
-    .then((user) => res.send({ data: user }))
+  ).orFail(new Error('NotFound'))
+    .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(404).send({ message: 'Пользователь с указанным _id не найден', err });
-      }
       if (err instanceof mongoose.Error.CastError) {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля', err });
+      }
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию', err });
     });
@@ -78,16 +78,16 @@ const updateAvatar = (req, res) => {
       new: true,
       runValidators: true,
     },
-  )
+  ).orFail(new Error('NotFound'))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(404).send({ message: 'Пользователя с указанным _id не найден', err });
-      }
       if (err instanceof mongoose.Error.CastError) {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля', err });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка', err });
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
+      }
+      return res.status(500).send({ message: 'Ошибка по умолчанию', err });
     });
 };
 

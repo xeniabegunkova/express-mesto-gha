@@ -31,7 +31,7 @@ const getUser = (req, res) => {
 const getUserById = (req, res) => {
   User.findById(req.params.userId).orFail(new Error('NotFound'))
     .then((user) => {
-      res.status(201).send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
@@ -56,9 +56,9 @@ const updateUser = (req, res) => {
       runValidators: true,
     },
   ).orFail(new Error('NotFound'))
-    .then((user) => res.status(201).send({ data: user }))
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err instanceof mongoose.Error.CastError) {
+      if (err instanceof mongoose.Error.ValidationError) {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля', err });
       }
       if (err.message === 'NotFound') {

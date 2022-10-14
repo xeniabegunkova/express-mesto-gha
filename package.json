@@ -4,6 +4,7 @@
   "description": "[![Tests](https://github.com/yandex-praktikum/express-mesto-gha/actions/workflows/tests-13-sprint.yml/badge.svg)](https://github.com/yandex-praktikum/express-mesto-gha/actions/workflows/tests-13-sprint.yml) [![Tests](https://github.com/yandex-praktikum/express-mesto-gha/actions/workflows/tests-14-sprint.yml/badge.svg)](https://github.com/yandex-praktikum/express-mesto-gha/actions/workflows/tests-14-sprint.yml)\r # Проект Mesto фронтенд + бэкенд",
   "main": "index.js",
   "scripts": {
+    "lint": "npx eslint .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js",
     "start": "node app.js"
@@ -12,7 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/xeniabegunkova/express-mesto-gha.git"
   },
-  "author": "",
+  "author": "Xenia Begunkova",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/xeniabegunkova/express-mesto-gha/issues"

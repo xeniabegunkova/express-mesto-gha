@@ -17,14 +17,12 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+app.disable('x-powered-by');
+
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.get('/', (req, res) => {
-  res.send(req.body);
-});
-
-app.patch('*', (req, res) => {
+app.use('*', (req, res) => {
   res.status(404).send({ message: 'Не найдено' });
 });
 

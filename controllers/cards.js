@@ -1,5 +1,12 @@
+/* eslint-disable max-len */
 const mongoose = require('mongoose');
 const Card = require('../models/card');
+const {
+  NOT_FOUND,
+  VALIDATION_ERROR,
+  SERVER_ERROR,
+  ALERT_MESSAGE,
+} = require('../utils/constants');
 
 const createCards = (req, res) => {
   const { name, link } = req.body;
@@ -11,9 +18,9 @@ const createCards = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(400).send({ message: 'Ошибка валидации', err });
+        return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.GET_CARDS_ERROR });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка', err });
+      return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
     });
 };
 
@@ -22,8 +29,8 @@ const getCards = (req, res) => {
     .then((cards) => {
       res.send({ data: cards });
     })
-    .catch((err) => {
-      res.status(500).send({ message: 'На сервере произошла ошибка', err });
+    .catch(() => {
+      res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
     });
 };
 
@@ -31,15 +38,15 @@ const deleteCardById = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+        return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.DELETE_CARDSID_ERROR });
       }
       return res.send({ data: card });
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
-        return res.status(400).send({ message: 'Не корректный _id', err });
+        return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDIN_NOT_FOUND });
       }
-      return res.status(500).send({ message: 'Ошибка по умолчанию.', err });
+      return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
     });
 };
 
@@ -50,18 +57,18 @@ const likeCard = (req, res) => Card.findByIdAndUpdate(
 )
   .then((card) => {
     if (!card) {
-      return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+      return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.DELETE_CARDSID_ERROR });
     }
     return res.send({ data: card });
   })
   .catch((err) => {
     if (err.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка. ', err });
+      return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDID_VALIDATION_ERROR });
     }
     if (err instanceof mongoose.Error.CastError) {
-      return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка', err });
+      return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDID_VALIDATION_ERROR });
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию', err });
+    return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
   });
 
 const dislikeCard = (req, res) => Card.findByIdAndUpdate(
@@ -71,18 +78,18 @@ const dislikeCard = (req, res) => Card.findByIdAndUpdate(
 )
   .then((card) => {
     if (!card) {
-      return res.status(404).send({ message: 'Передан несуществующий _id карточки' });
+      return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.DELETE_CARDSID_ERROR });
     }
     return res.send({ data: card });
   })
   .catch((err) => {
     if (err.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка. ', err });
+      return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDID_VALIDATION_ERROR });
     }
     if (err instanceof mongoose.Error.CastError) {
-      return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка', err });
+      return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDID_VALIDATION_ERROR });
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию', err });
+    return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
   });
 
 module.exports = {

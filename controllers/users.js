@@ -89,14 +89,19 @@ const updateAvatar = (req, res, next) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new BadReq(ALERT_MESSAGE.ID_NOT_FOUND))
+  ).orFail(new NotFound(ALERT_MESSAGE.ID_NOT_FOUND))
     .then((user) => res.send({ data: user }))
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return next(new BadReq(ALERT_MESSAGE.VALIDATION_ERROR));
+      }
+      return next(err);
+    });
 };
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
-  return User.findUserByCredentials(email, password)
+  User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign(
         { _id: user._id },

@@ -89,7 +89,7 @@ const updateAvatar = (req, res, next) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new NotFound(ALERT_MESSAGE.ID_NOT_FOUND))
+  ).orFail(new BadReq(ALERT_MESSAGE.ID_NOT_FOUND))
     .then((user) => res.send({ data: user }))
     .catch(next);
 };

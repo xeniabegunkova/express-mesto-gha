@@ -11,7 +11,6 @@ module.exports = ((err, req, res, next) => {
       message: statusCode === STATUS_CODES.SERVER_ERROR
         ? ALERT_MESSAGE.SERVER_ERROR
         : message,
-      err,
     });
 
   next();

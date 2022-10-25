@@ -20,7 +20,7 @@ const createUser = (req, res, next) => {
       const newUser = {
         _id: user._id,
         name: user.name,
-        abour: user.about,
+        about: user.about,
         avatar: user.avatar,
         email: user.email,
       };

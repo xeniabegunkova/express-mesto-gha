@@ -13,7 +13,10 @@ const BadReq = require('../errors/BadRequest');
 const createUser = (req, res, next) => {
   bcrypt.hash(req.body.password, 7)
     .then((hash) => User.create({
-      ...req.body,
+      about: req.body.about,
+      name: req.body.name,
+      avatar: req.body.avatar,
+      email: req.body.email,
       password: hash,
     }))
     .then((user) => {
@@ -29,7 +32,7 @@ const createUser = (req, res, next) => {
     .catch((err) => {
       if (err.code === 11000) {
         next(new Conflict(ALERT_MESSAGE.EXISTING_EMAIL));
-      } else if (err.name === 'ValidationError') {
+      } if (err.name === 'ValidationError') {
         next(new BadReq(ALERT_MESSAGE.GET_USER_ERROR));
       }
       next(err);
@@ -38,7 +41,9 @@ const createUser = (req, res, next) => {
 
 const getUser = (req, res, next) => {
   User.find({})
-    .then((users) => res.send({ data: users }))
+    .then((users) => {
+      res.send({ data: users });
+    })
     .catch(next);
 };
 

@@ -6,6 +6,7 @@ const {
 } = require('../utils/constants');
 const NotFound = require('../errors/NotFound');
 const Forbbiden = require('../errors/Forbidden');
+const BadReq = require('../errors/BadRequest')
 
 const createCards = (req, res, next) => {
   const { name, link } = req.body;
@@ -15,7 +16,12 @@ const createCards = (req, res, next) => {
     .then((card) => {
       res.status(STATUS_CODES.WELL_DONE).send({ data: card });
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return next(new BadReq(ALERT_MESSAGE.GET_CARDS_ERROR));
+      }
+      return next(err);
+    });
 };
 
 const getCards = (req, res, next) => {

@@ -28,9 +28,11 @@ const createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.code === 11000) {
-        return next(new Conflict(ALERT_MESSAGE.EXISTING_EMAIL));
+        next(new Conflict(ALERT_MESSAGE.EXISTING_EMAIL));
+      } else if (err.name === 'ValidationError') {
+        next(new BadReq(ALERT_MESSAGE.GET_USER_ERROR));
       }
-      return next(err);
+      next(err);
     });
 };
 

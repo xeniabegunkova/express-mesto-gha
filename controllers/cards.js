@@ -36,7 +36,7 @@ const deleteCardById = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
-        throw new Forbbiden(ALERT_MESSAGE.DELETE_CARDSID_ERROR);
+        throw new NotFound(ALERT_MESSAGE.DELETE_CARDSID_ERROR);
       }
       if (card.owner.toString() !== req.user._id) {
         throw new Forbbiden(ALERT_MESSAGE.REFUSAL_TO_DELETE);

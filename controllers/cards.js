@@ -6,7 +6,7 @@ const {
 } = require('../utils/constants');
 const NotFound = require('../errors/NotFound');
 const Forbbiden = require('../errors/Forbidden');
-const BadReq = require('../errors/BadRequest')
+const BadReq = require('../errors/BadRequest');
 
 const createCards = (req, res, next) => {
   const { name, link } = req.body;

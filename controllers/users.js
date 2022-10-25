@@ -38,9 +38,7 @@ const createUser = (req, res, next) => {
 
 const getUser = (req, res, next) => {
   User.find({})
-    .then((users) => {
-      res.send({ data: users });
-    })
+    .then((users) => res.send({ data: users }))
     .catch(next);
 };
 

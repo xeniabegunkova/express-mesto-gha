@@ -1,96 +1,71 @@
 /* eslint-disable max-len */
-const mongoose = require('mongoose');
 const Card = require('../models/card');
 const {
-  NOT_FOUND,
-  VALIDATION_ERROR,
-  SERVER_ERROR,
+  STATUS_CODES,
   ALERT_MESSAGE,
 } = require('../utils/constants');
+const NotFound = require('../errors/NotFound');
+const Forbbiden = require('../errors/Forbidden');
 
-const createCards = (req, res) => {
+const createCards = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
 
   Card.create({ name, link, owner })
     .then((card) => {
-      res.status(201).send({ data: card });
+      res.status(STATUS_CODES.WELL_DONE).send({ data: card });
     })
-    .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.GET_CARDS_ERROR });
-      }
-      return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
-    });
+    .catch(next);
 };
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => {
       res.send({ data: cards });
     })
-    .catch(() => {
-      res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
-    });
+    .catch(next);
 };
 
-const deleteCardById = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+const deleteCardById = (req, res, next) => {
+  Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
-        return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.DELETE_CARDSID_ERROR });
+        throw new Forbbiden(ALERT_MESSAGE.DELETE_CARDSID_ERROR);
       }
-      return res.send({ data: card });
+      if (card.owner.toString() !== req.user._id) {
+        throw new Forbbiden(ALERT_MESSAGE.REFUSAL_TO_DELETE);
+      }
+      return Card.findByIdAndRemove(req.params.cardId)
+        .then((removedCard) => res.send(removedCard));
     })
-    .catch((err) => {
-      if (err instanceof mongoose.Error.CastError) {
-        return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDIN_NOT_FOUND });
-      }
-      return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
-    });
+    .catch(next);
 };
 
-const likeCard = (req, res) => Card.findByIdAndUpdate(
+const likeCard = (req, res, next) => Card.findByIdAndUpdate(
   req.params.cardId,
   { $addToSet: { likes: req.user._id } },
   { new: true },
 )
   .then((card) => {
     if (!card) {
-      return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.DELETE_CARDSID_ERROR });
+      throw new NotFound(ALERT_MESSAGE.DELETE_CARDSID_ERROR);
     }
     return res.send({ data: card });
   })
-  .catch((err) => {
-    if (err.name === 'ValidationError') {
-      return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDID_VALIDATION_ERROR });
-    }
-    if (err instanceof mongoose.Error.CastError) {
-      return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDID_VALIDATION_ERROR });
-    }
-    return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
-  });
+  .catch(next);
 
-const dislikeCard = (req, res) => Card.findByIdAndUpdate(
+const dislikeCard = (req, res, next) => Card.findByIdAndUpdate(
   req.params.cardId,
   { $pull: { likes: req.user._id } },
   { new: true },
 )
   .then((card) => {
     if (!card) {
-      return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.DELETE_CARDSID_ERROR });
+      throw new NotFound(ALERT_MESSAGE.DELETE_CARDSID_ERROR);
     }
     return res.send({ data: card });
   })
-  .catch((err) => {
-    if (err.name === 'ValidationError') {
-      return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDID_VALIDATION_ERROR });
-    }
-    if (err instanceof mongoose.Error.CastError) {
-      return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.LIKE_CARDID_VALIDATION_ERROR });
-    }
-    return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
-  });
+  .catch(next);
 
 module.exports = {
   createCards,

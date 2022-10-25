@@ -1,50 +1,69 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const {
-  NOT_FOUND,
-  VALIDATION_ERROR,
-  SERVER_ERROR,
+  STATUS_CODES,
   ALERT_MESSAGE,
 } = require('../utils/constants');
+const NotFound = require('../errors/NotFound');
+const Conflict = require('../errors/Conflict');
+const BadReq = require('../errors/BadRequest');
 
-const createUser = (req, res) => {
-  User.create(req.body)
+const createUser = (req, res, next) => {
+  bcrypt.hash(req.body.password, 7)
+    .then((hash) => User.create({
+      ...req.body,
+      password: hash,
+    }))
     .then((user) => {
-      res.status(201).send(user);
+      const newUser = {
+        _id: user._id,
+        name: user.name,
+        abour: user.about,
+        avatar: user.avatar,
+        email: user.email,
+      };
+      res.status(STATUS_CODES.WELL_DONE).send(newUser);
     })
     .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.GET_USER_ERROR });
+      if (err.code === 11000) {
+        return next(new Conflict(ALERT_MESSAGE.EXISTING_EMAIL));
       }
-      return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
+      return next(err);
     });
 };
 
-const getUser = (req, res) => {
+const getUser = (req, res, next) => {
   User.find({})
     .then((users) => {
       res.send({ data: users });
     })
-    .catch(() => res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR }));
+    .catch(next);
 };
 
-const getUserById = (req, res) => {
-  User.findById(req.params.userId).orFail(new Error('NotFound'))
+const getUserById = (req, res, next) => {
+  User.findById(req.params.userId).orFail(new NotFound(ALERT_MESSAGE.GET_NOT_FOUND))
     .then((user) => {
       res.send(user);
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
-        return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.PATCH_VALIDATION_ERROR });
+        return next(new BadReq(ALERT_MESSAGE.ID_NOT_FOUND));
       }
-      if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.GET_NOT_FOUND });
-      }
-      return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
+      return next(err);
     });
 };
 
-const updateUser = (req, res) => {
+const getAuthorizedUser = (req, res, next) => {
+  User.findById(
+    req.user._id,
+  ).orFail(new NotFound(ALERT_MESSAGE.ID_NOT_FOUND))
+    .then((user) => res.send({ data: user }))
+    .catch(next);
+};
+
+const updateUser = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
     {
@@ -55,20 +74,12 @@ const updateUser = (req, res) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new Error('NotFound'))
+  ).orFail(new NotFound(ALERT_MESSAGE.ID_NOT_FOUND))
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.PATCH_VALIDATION_ERROR });
-      }
-      if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.GET_NOT_FOUND });
-      }
-      return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
-    });
+    .catch(next);
 };
 
-const updateAvatar = (req, res) => {
+const updateAvatar = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
     {
@@ -78,17 +89,28 @@ const updateAvatar = (req, res) => {
       new: true,
       runValidators: true,
     },
-  ).orFail(new Error('NotFound'))
+  ).orFail(new NotFound(ALERT_MESSAGE.ID_NOT_FOUND))
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(VALIDATION_ERROR).send({ message: ALERT_MESSAGE.PATCH_VALIDATION_ERROR });
-      }
-      if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND).send({ message: ALERT_MESSAGE.GET_NOT_FOUND });
-      }
-      return res.status(SERVER_ERROR).send({ message: ALERT_MESSAGE.SERVER_ERROR });
-    });
+    .catch(next);
+};
+
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign(
+        { _id: user._id },
+        'secret-key',
+        { expiresIn: '7d' },
+      );
+      res.cookie('jwt', token, {
+        maxAge: 3600000 * 12 * 7,
+        httpOnly: true,
+        sameSite: true,
+      })
+        .send({ message: 'Авторизация прошла успешно!' });
+    })
+    .catch(next);
 };
 
 module.exports = {
@@ -97,4 +119,6 @@ module.exports = {
   getUserById,
   updateUser,
   updateAvatar,
+  login,
+  getAuthorizedUser,
 };

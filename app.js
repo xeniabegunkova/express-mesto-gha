@@ -1,5 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
+const { errors, celebrate, Joi } = require('celebrate');
+const { login, createUser } = require('./controllers/users');
+const auth = require('./middlewares/auth');
+const NotFound = require('./errors/NotFound');
+const { ALERT_MESSAGE } = require('./utils/constants');
+const centralizedErrorHandling = require('./middlewares/centralizedErrorHandling');
 
 const { PORT = 3000, MONGO_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
 
@@ -7,25 +14,41 @@ mongoose.connect(MONGO_URL);
 
 const app = express();
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6346697f2dadb1bb7f46856d',
-  };
-
-  next();
-});
-
 app.use(express.json());
+app.use(cookieParser());
 
 app.disable('x-powered-by');
 
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required().min(7),
+  }),
+}), login);
+
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required().min(7),
+    name: Joi.string().required().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string(),
+  }),
+}), createUser);
+
+app.use(auth);
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.use('*', (req, res) => {
-  res.status(404).send({ message: 'Не найдено' });
+app.use('*', () => {
+  throw new NotFound(ALERT_MESSAGE.NOT_FOUND_ERROR_TEST);
 });
 
+app.use(errors());
+
+app.use(centralizedErrorHandling);
+
 app.listen(PORT, () => {
+  // eslint-disable-next-line no-console
   console.log(`Listening on ${PORT}`);
 });

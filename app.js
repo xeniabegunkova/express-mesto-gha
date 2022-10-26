@@ -7,6 +7,7 @@ const auth = require('./middlewares/auth');
 const NotFound = require('./errors/NotFound');
 const { ALERT_MESSAGE } = require('./utils/constants');
 const centralizedErrorHandling = require('./middlewares/centralizedErrorHandling');
+const Regex = require('./utils/regex');
 
 const { PORT = 3000, MONGO_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
 
@@ -22,19 +23,23 @@ app.disable('x-powered-by');
 app.post('/signin', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
-    password: Joi.string().required().min(7),
+    password: Joi.string().required(),
   }),
 }), login);
 
 app.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
-    password: Joi.string().required().min(7),
+    password: Joi.string().required(),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(/^https?:\/\/(www\.)?[a-zA-Z\d-]+\.[\w\d\-.~:/?#[\]@!$&'()*+,;=]{2,}#?$/),
+    avatar: Joi.string().pattern(Regex),
   }),
 }), createUser);
+
+app.get('/signout', (req, res) => {
+  res.clearCookie('jwt').send({ message: 'Выход' });
+});
 
 app.use(auth);
 app.use('/users', require('./routes/users'));
